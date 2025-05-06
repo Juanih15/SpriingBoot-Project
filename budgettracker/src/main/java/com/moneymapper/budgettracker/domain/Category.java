@@ -1,5 +1,5 @@
 package com.moneymapper.budgettracker.domain;
 
-public class Category {
-
+public enum Category {
+    GROCERIES, GAS, ENTERTAINMENT, ATHLETICS, RECREATION, SUBSCRIPTIONS
 }
