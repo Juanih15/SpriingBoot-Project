@@ -2,11 +2,20 @@ package com.moneymapper.budgettracker.repository;
 
 import com.moneymapper.budgettracker.domain.*;
 import org.springframework.data.jpa.repository.*;
-import java.math.BigDecimal;
+import org.springframework.data.repository.query.Param;
+
 import java.util.List;
 
-@SuppressWarnings("unused")
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
-    @Query("select e.category, sum(e.amount) from Expense e group by e.category")
-    List<Object[]> sumByCategory();
+    @Query("""
+            select coalesce(c.parent, c) as bucket,
+                   sum(e.amount)         as total
+            from   Expense   e
+                   join e.category c
+            where  :user is null
+                   or c.owner = :user
+                   or c.owner is null
+            group  by bucket
+            """)
+    List<Object[]> sumByBucket(@Param("user") User user);
 }

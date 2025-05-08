@@ -12,8 +12,7 @@ public class Expense {
     @GeneratedValue
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @NotNull
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Category category;
 
     @DecimalMin("0.01")
