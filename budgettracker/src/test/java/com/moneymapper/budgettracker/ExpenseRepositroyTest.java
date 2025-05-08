@@ -1,11 +1,13 @@
 package com.moneymapper.budgettracker;
 
+import com.moneymapper.budgettracker.bootstrap.CategorySeeder;
 import com.moneymapper.budgettracker.domain.*;
 import com.moneymapper.budgettracker.repository.CategoryRepository;
 import com.moneymapper.budgettracker.repository.ExpenseRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,6 +15,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
+@Import(CategorySeeder.class)
 class ExpenseRepositoryTest {
 
     @Autowired

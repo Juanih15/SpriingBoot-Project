@@ -7,15 +7,16 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
-    @Query("""
-            select coalesce(c.parent, c) as bucket,
-                   sum(e.amount)         as total
-            from   Expense   e
-                   join e.category c
-            where  :user is null
-                   or c.owner = :user
-                   or c.owner is null
-            group  by bucket
-            """)
-    List<Object[]> sumByBucket(@Param("user") User user);
+       @Query(value = """
+                     SELECT COALESCE(c.parent_id, c.id) AS bucket_id,
+                            SUM(e.amount)              AS total
+                     FROM   expense e
+                            JOIN categories c ON e.category_id = c.id
+                     WHERE  (:userId IS NULL
+                             OR c.owner_id = :userId
+                             OR c.owner_id IS NULL)
+                     GROUP  BY bucket_id
+                     """, nativeQuery = true)
+       List<Object[]> sumByBucket(@Param("userId") User user);
+
 }

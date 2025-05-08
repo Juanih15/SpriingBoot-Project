@@ -13,7 +13,7 @@ public class Budget {
     @GeneratedValue
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private User owner;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
