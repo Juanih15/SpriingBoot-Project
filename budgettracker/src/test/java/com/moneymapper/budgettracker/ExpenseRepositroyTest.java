@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Import;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,27 +21,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ExpenseRepositoryTest {
 
     @Autowired
-    ExpenseRepository expenses;
-    @Autowired
     CategoryRepository categories;
+    @Autowired
+    ExpenseRepository expenses;
 
     @Test
     void sumByBucket_rollsUpChildrenIntoParent() {
-        Category water = categories.findById(4L).orElseThrow(); // "Water"
-        Category rent = categories.findById(2L).orElseThrow(); // "Rent / Mortgage"
-        Category living = categories.findById(1L).orElseThrow(); // "Living Expenses" (parent)
+        // build a tree
+        Category living = categories.save(new Category("Living Expenses", null, null));
+        Category water = categories.save(new Category("Water", living, null));
+        Category rent = categories.save(new Category("Rent / Mortgage", living, null));
 
-        expenses.save(new Expense(water, BigDecimal.valueOf(55), LocalDate.now()));
-        expenses.save(new Expense(rent, BigDecimal.valueOf(700), LocalDate.now()));
+        // two expenses under different children
+        expenses.save(new Expense(water, new BigDecimal("55"), LocalDate.now()));
+        expenses.save(new Expense(rent, new BigDecimal("700"), LocalDate.now()));
 
-        var rows = expenses.sumByBucket(null); // null user → include seeded cats
+        // query & map
+        Map<Long, BigDecimal> totals = expenses.sumByBucket((Long) null) // cast resolves overload
+                .stream() // must call stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).longValue(), // bucket_id
+                        row -> (BigDecimal) row[1])); // total
 
-        BigDecimal total = rows.stream()
-                .filter(r -> r[0].equals(living))
-                .map(r -> (BigDecimal) r[1])
-                .findFirst()
-                .orElse(BigDecimal.ZERO);
-
-        assertThat(total).isEqualByComparingTo("755.00");
+        assertThat(totals.get(living.getId()))
+                .isEqualByComparingTo("755.00");
     }
+
 }
