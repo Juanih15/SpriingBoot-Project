@@ -1,4 +1,4 @@
-package com.moneymapper.budgettracker.web.dto;
+package com.moneymapper.budgettracker.dto;
 
 import java.util.ArrayList;
 import java.util.List;

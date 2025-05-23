@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head> <title>Dashboard</title> </head>
+<body>
+<h1 th:text="'Balance: $' + ${balance}"></h1>
+
+<table>
+  <tr><th>Category</th><th>Spent</th></tr>
+  <tr th:each="c : ${categories}">
+      <td th:text="${c.name}"></td>
+      <td th:text="${c.total}"></td>
+  </tr>
+</table>
+</body>
+</html>

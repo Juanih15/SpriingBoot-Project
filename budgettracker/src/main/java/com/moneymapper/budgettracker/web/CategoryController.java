@@ -2,10 +2,11 @@ package com.moneymapper.budgettracker.web;
 
 import com.moneymapper.budgettracker.domain.Category;
 import com.moneymapper.budgettracker.domain.User;
+import com.moneymapper.budgettracker.dto.CategoryDto;
+import com.moneymapper.budgettracker.dto.CreateCategoryRequest;
+import com.moneymapper.budgettracker.mapper.CategoryMapper;
 import com.moneymapper.budgettracker.repository.CategoryRepository;
-import com.moneymapper.budgettracker.web.dto.CategoryDto;
-import com.moneymapper.budgettracker.web.dto.CreateCategoryRequest;
-import com.moneymapper.budgettracker.web.mapper.CategoryMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -14,24 +15,19 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
+@RequiredArgsConstructor
 public class CategoryController {
 
     private final CategoryRepository categories;
+    private final CategoryMapper mapper;
 
-    public CategoryController(CategoryRepository categories) {
-        this.categories = categories;
-    }
-
-    /** entire tree (system defaults + user’s custom nodes) */
     @GetMapping
     public List<CategoryDto> all(@AuthenticationPrincipal User user) {
-        var roots = categories.findByParent(null); // top-level nodes
-        return roots.stream()
-                .map(CategoryMapper::toDto)
+        return categories.findByOwnerIsNullOrOwner(user).stream()
+                .map(mapper::toDto)
                 .toList();
     }
 
-    /** add a custom sub-category (owner = current user) */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CategoryDto create(@RequestBody CreateCategoryRequest req,
@@ -43,16 +39,23 @@ public class CategoryController {
                         .orElseThrow(() -> new IllegalArgumentException("parent not found"));
 
         var saved = categories.save(new Category(req.name(), parent, user));
-        return CategoryMapper.toDto(saved);
+        return mapper.toDto(saved);
     }
 
-    /** rename a category (owner check omitted for brevity) */
     @PatchMapping("/{id}")
-    public CategoryDto rename(@PathVariable Long id, @RequestBody String newName) {
-        var cat = categories.findById(id)
+    public CategoryDto rename(@PathVariable Long id,
+            @RequestBody String newName,
+            @AuthenticationPrincipal User user) {
+
+        var original = categories.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("not found"));
-        cat.setName(newName);
-        return CategoryMapper.toDto(categories.save(cat));
+
+        // optional: owner-check => if (!original.getOwner().equals(user)) throw …
+
+        var replacement = new Category(newName, original.getParent(), original.getOwner());
+        categories.delete(original);
+        var saved = categories.save(replacement);
+        return mapper.toDto(saved);
     }
 
     @DeleteMapping("/{id}")

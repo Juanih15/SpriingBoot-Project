@@ -1,0 +1,14 @@
+<h1>Budget for [[${budget.yearMonth}]]</h1>
+<h2 th:class="${budget.remaining.signum() < 0} ? 'text-red-600' :
+              ${budget.remaining.divide(budget.amount,2).compareTo(0.25) < 0} ? 'text-amber-500' :
+              'text-green-600' ">
+   Remaining: $[[${#numbers.formatDecimal(budget.remaining,0,'COMMA',2,'POINT')}]]
+</h2>
+
+<table>
+ <tr th:each="e : ${expenses}">
+   <td>[[${#dates.format(e.instant,'dd MMM')}]]</td>
+   <td>[[${e.category.name}]]</td>
+   <td>$[[${e.amount.negate()}]]</td>
+ </tr>
+</table>

@@ -1,34 +1,51 @@
 package com.moneymapper.budgettracker.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@Getter
 public class Expense {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
     private Category category;
 
-    @DecimalMin("0.01")
-    @Digits(integer = 10, fraction = 2)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @NotNull
+    private Budget budget;
+
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @SuppressWarnings("unused")
+    @Column(nullable = false)
     private LocalDate date;
 
-    protected Expense() {
-    } // for JPA
+    /** Optional free-text note. */
+    private String memo;
 
-    public Expense(Category c, BigDecimal amt, LocalDate date) {
-        this.category = c;
-        this.amount = amt;
+    protected Expense() {
+    } // JPA only
+
+    public Expense(Category category,
+            Budget budget,
+            BigDecimal amount,
+            LocalDate date) {
+        this.category = category;
+        this.budget = budget;
+        this.amount = amount;
         this.date = date;
     }
 
+    public void setMemo(String memo) {
+        this.memo = memo;
+    }
 }

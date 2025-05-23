@@ -1,36 +1,28 @@
 package com.moneymapper.budgettracker.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Objects;
 
+/** A user-defined (or system) expense category that may be nested. */
 @Entity
-@Table(name = "categories")
 public class Category {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
     @Column(nullable = false)
     private String name;
 
-    // null ⇒ this is a top-level node (“Living Expenses”)
+    /** null ⇒ this is a root category. */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
     private Category parent;
 
-    // Convenience back-reference
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Category> children = new HashSet<>();
-
-    // null ⇒ a system-wide starter category
+    /** null ⇒ shared across all users (system default). */
     @ManyToOne(fetch = FetchType.LAZY)
     private User owner;
 
-    // JPA only
+    /** JPA only. */
     protected Category() {
     }
 
@@ -40,13 +32,7 @@ public class Category {
         this.owner = owner;
     }
 
-    public void forEach(Object object) {
-        throw new UnsupportedOperationException("Unimplemented method 'forEach'");
-    }
-
-    public void setName(String newName) {
-        throw new UnsupportedOperationException("Unimplemented method 'setName'");
-    }
+    /* -------- getters & plain setters (optional if you use Lombok) -------- */
 
     public Long getId() {
         return id;
@@ -60,8 +46,22 @@ public class Category {
         return parent;
     }
 
-    public Set<Category> getChildren() {
-        return children;
+    public User getOwner() {
+        return owner;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Category c && Objects.equals(id, c.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Category[id=%d,%s]".formatted(id, name);
+    }
 }

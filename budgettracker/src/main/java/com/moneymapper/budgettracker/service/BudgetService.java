@@ -1,44 +1,53 @@
 package com.moneymapper.budgettracker.service;
 
-import com.moneymapper.budgettracker.domain.User;
-import com.moneymapper.budgettracker.repository.CategoryRepository;
-import com.moneymapper.budgettracker.repository.ExpenseRepository;
-import com.moneymapper.budgettracker.web.dto.CategoryDto;
-import com.moneymapper.budgettracker.web.mapper.CategoryMapper;
-import jakarta.transaction.Transactional;
+import com.moneymapper.budgettracker.domain.*;
+import com.moneymapper.budgettracker.dto.*;
+import com.moneymapper.budgettracker.mapper.ExpenseMapper;
+import com.moneymapper.budgettracker.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.LinkedHashMap;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class BudgetService {
 
-    private final ExpenseRepository expenseRepo;
+    private final BudgetRepository budgetRepo;
     private final CategoryRepository categoryRepo;
+    private final ExpenseRepository expenseRepo;
 
-    public BudgetService(ExpenseRepository expenseRepo,
-            CategoryRepository categoryRepo) {
-        this.expenseRepo = expenseRepo;
-        this.categoryRepo = categoryRepo;
+    private final Clock clock = Clock.systemDefaultZone();
+
+    public ExpenseDTO addExpense(NewExpenseDTO dto, User owner) {
+
+        Category cat = categoryRepo.findById(dto.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("category not found"));
+
+        Budget active = findActiveBudgetFor(owner);
+
+        Expense exp = new Expense(cat, active, dto.amount(), LocalDate.now(clock));
+        exp.setMemo(dto.memo());
+
+        Expense saved = expenseRepo.save(exp);
+        return ExpenseMapper.toDto(saved); // static mapper you already have
     }
 
-    public Map<CategoryDto, BigDecimal> totals(User user) {
-        Map<Long, CategoryDto> byId = categoryRepo.findAll().stream() // uses categoryRepo
-                .map(CategoryMapper::toDto)
+    public Map<CategoryDto, BigDecimal> totals(User owner) {
+        List<Object[]> rows = expenseRepo.sumByCategoryForUser(owner.getId());
+        return rows.stream()
                 .collect(Collectors.toMap(
-                        CategoryDto::id,
-                        Function.identity()));
+                        r -> new CategoryDto((Long) r[0], (String) r[1], (Long) r[2]),
+                        r -> (BigDecimal) r[3]));
+    }
 
-        return expenseRepo.sumByBucket(user == null ? null : user.getId()).stream()
-                .collect(Collectors.toMap(
-                        row -> byId.get(((Number) row[0]).longValue()),
-                        row -> (BigDecimal) row[1],
-                        (a, b) -> a,
-                        LinkedHashMap::new));
+    private Budget findActiveBudgetFor(User owner) {
+        return budgetRepo.findTopByOwnerOrderByStartDateDesc(owner)
+                .orElseThrow(() -> new IllegalStateException("No budget defined"));
     }
 }

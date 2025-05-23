@@ -1,85 +1,56 @@
 package com.moneymapper.budgettracker.domain;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
-@Table(name = "budgets", uniqueConstraints = @UniqueConstraint(name = "uk_budget_owner_category", columnNames = {
-        "owner_id", "category_id" }))
 public class Budget {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false)
     private User owner;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    private Category category;
+    private String name;
 
-    @DecimalMin("0.01")
-    @Digits(integer = 10, fraction = 2)
-    private BigDecimal limitAmount;
+    /** Planned amount for the whole period. */
+    @Column(precision = 12, scale = 2)
+    private BigDecimal limit;
+
+    private LocalDate startDate;
+    private LocalDate endDate;
 
     protected Budget() {
     }
 
-    public Budget(User owner, Category category, BigDecimal limitAmount) {
+    public Budget(User owner, String name,
+            BigDecimal limit, LocalDate startDate, LocalDate endDate) {
         this.owner = owner;
-        this.category = category;
-        this.limitAmount = limitAmount;
+        this.name = name;
+        this.limit = limit;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
-    public Long getId() {
-        return id;
+    public void applyExpense(BigDecimal amount) {
+        if (limit != null)
+            limit = limit.subtract(amount);
     }
 
-    public User getOwner() {
-        return owner;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public BigDecimal getLimitAmount() {
-        return limitAmount;
-    }
-
-    public void setOwner(User owner) {
-        this.owner = owner;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
-
-    public void setLimitAmount(BigDecimal limit) {
-        this.limitAmount = limit;
-    }
+    /* getters … */
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof Budget other))
-            return false;
-        return id != null && id.equals(other.id);
+        return o instanceof Budget b && Objects.equals(id, b.id);
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "Budget{id=%d, owner=%s, category=%s, limit=%s}"
-                .formatted(id,
-                        owner == null ? "null" : owner.getId(),
-                        category == null ? "null" : category.getId(),
-                        limitAmount);
+        return Objects.hash(id);
     }
 }
