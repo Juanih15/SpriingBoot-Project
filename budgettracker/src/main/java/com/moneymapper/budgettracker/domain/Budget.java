@@ -18,8 +18,7 @@ public class Budget {
 
     private String name;
 
-    /** Planned amount for the whole period. */
-    @Column(precision = 12, scale = 2)
+    @Column(name = "budget_limit")
     private BigDecimal limit;
 
     private LocalDate startDate;

@@ -8,6 +8,7 @@ import java.util.Collections;
 
 /** Minimal user entity that plugs straight into Spring Security. */
 @Entity
+@Table(name = "app_user")
 public class User implements UserDetails {
 
     @Id

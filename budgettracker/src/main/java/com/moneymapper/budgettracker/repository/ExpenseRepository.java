@@ -13,14 +13,20 @@ import java.util.List;
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
        @Query("""
-                        select c.id, c.name, coalesce(c.parent.id, c.id) as bucket, sum(e.amount)
-                        from Expense e join e.category c
-                        where e.budget.owner.id = :uid
-                        group by bucket, c.id, c.name
+                     SELECT COALESCE(c.parent.id, c.id) AS bucketId,
+                            SUM(e.amount)              AS total
+                     FROM   Expense e
+                            JOIN e.category c
+                     WHERE  (:userId IS NULL
+                             OR c.owner.id = :userId
+                             OR c.owner IS NULL)
+                     GROUP  BY bucketId
                      """)
-       List<Object[]> sumByCategoryForUser(@Param("uid") Long userId);
+       List<Object[]> sumByBucket(@Param("userId") Long userId);
 
        @EntityGraph(attributePaths = { "category", "budget" })
        List<Expense> findByBudget(Budget b);
+
+       List<Object[]> sumByCategoryForUser(Long id);
 
 }

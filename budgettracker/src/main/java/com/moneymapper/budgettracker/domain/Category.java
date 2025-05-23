@@ -32,8 +32,6 @@ public class Category {
         this.owner = owner;
     }
 
-    /* -------- getters & plain setters (optional if you use Lombok) -------- */
-
     public Long getId() {
         return id;
     }
