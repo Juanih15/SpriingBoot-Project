@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ActiveProfiles("test")
 @DataJpaTest
@@ -34,7 +35,9 @@ class ExpenseRepositoryTest {
         repo.save(new Expense(cat, budget, new BigDecimal("40.00"), LocalDate.now()));
         repo.save(new Expense(cat, budget, new BigDecimal("10.00"), LocalDate.now()));
 
-        var sum = repo.sumByCategoryForUser(user.getId()).get(0)[1];
-        assert new BigDecimal("50.00").compareTo((BigDecimal) sum) == 0;
+        var row = repo.sumByCategoryForUser(user.getId()).get(0);
+        var total = (BigDecimal) row[3]; // index 3 = SUM(e.amount)
+        assertEquals(new BigDecimal("50.00"), total);
+
     }
 }

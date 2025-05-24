@@ -27,6 +27,17 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
        @EntityGraph(attributePaths = { "category", "budget" })
        List<Expense> findByBudget(Budget b);
 
-       List<Object[]> sumByCategoryForUser(Long id);
+       @Query("""
+                     SELECT c.id                      AS categoryId,
+                            c.name                    AS categoryName,
+                            COALESCE(c.parent.id,c.id) AS bucketId,
+                            SUM(e.amount)             AS total
+                     FROM   Expense e
+                            JOIN e.category c
+                            JOIN e.budget   b
+                     WHERE  b.owner.id = :userId
+                     GROUP  BY c.id, c.name, c.parent.id
+                     """)
+       List<Object[]> sumByCategoryForUser(@Param("userId") Long userId);
 
 }
