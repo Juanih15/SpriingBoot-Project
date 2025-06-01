@@ -1,14 +1,41 @@
 package com.moneymapper.budgettracker.dto;
 
-import java.util.ArrayList;
-import java.util.List;
+// A DTO that includes id, name, and parentId (if any).
+public class CategoryDto {
+    private Long id;
+    private String name;
+    private Long parentId;
 
-public record CategoryDto(
-        Long id,
-        String name,
-        Long parentId,
-        List<CategoryDto> children) {
+    public CategoryDto() {
+    }
+
     public CategoryDto(Long id, String name, Long parentId) {
-        this(id, name, parentId, new ArrayList<>());
+        this.id = id;
+        this.name = name;
+        this.parentId = parentId;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
     }
 }

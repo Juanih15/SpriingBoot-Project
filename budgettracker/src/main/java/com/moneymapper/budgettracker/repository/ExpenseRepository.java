@@ -40,4 +40,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
                      """)
        List<Object[]> sumByCategoryForUser(@Param("userId") Long userId);
 
+       @Query("SELECT e.category.name, SUM(e.amount) "
+                     + "FROM Expense e GROUP BY e.category.name")
+       List<Object[]> sumByCategoryName();
 }

@@ -1,13 +1,11 @@
 package com.moneymapper.budgettracker.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Getter
+@Table(name = "expense")
 public class Expense {
 
     @Id
@@ -17,21 +15,20 @@ public class Expense {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Category category;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    /** Optional: link each expense to a budget period */
+    @ManyToOne(fetch = FetchType.LAZY)
     private Budget budget;
 
-    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
-
-    @Column(nullable = false)
     private LocalDate date;
 
-    /** Optional free-text note. */
+    /** Optional free-text memo / note */
     private String memo;
 
     protected Expense() {
-    } // JPA only
+    } // JPA
 
+    // full 4-arg ctor (category, budget, amount, date)
     public Expense(Category category,
             Budget budget,
             BigDecimal amount,
@@ -42,7 +39,54 @@ public class Expense {
         this.date = date;
     }
 
-    public void setMemo(String memo) {
-        this.memo = memo;
+    // 3-arg convenience ctor (category, amount, date)
+    public Expense(Category category,
+            BigDecimal amount,
+            LocalDate date) {
+        this(category, null, amount, date);
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public Budget getBudget() {
+        return budget;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public String getMemo() {
+        return memo;
+    }
+
+    public void setCategory(Category c) {
+        this.category = c;
+    }
+
+    public void setBudget(Budget b) {
+        this.budget = b;
+    }
+
+    public void setAmount(BigDecimal a) {
+        this.amount = a;
+    }
+
+    public void setDate(LocalDate d) {
+        this.date = d;
+    }
+
+    public void setMemo(String m) {
+        this.memo = m;
     }
 }

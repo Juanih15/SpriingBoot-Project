@@ -25,4 +25,10 @@ public class UserService implements UserDetailsService {
         return repo.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
     }
+
+    public User getCurrentUser() {
+        // todo hook into Spring Security later
+        return null;
+    }
+
 }

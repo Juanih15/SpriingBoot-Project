@@ -1,66 +1,54 @@
 package com.moneymapper.budgettracker.web;
 
 import com.moneymapper.budgettracker.domain.Category;
-import com.moneymapper.budgettracker.domain.User;
+import com.moneymapper.budgettracker.service.CategoryService;
 import com.moneymapper.budgettracker.dto.CategoryDto;
-import com.moneymapper.budgettracker.dto.CreateCategoryRequest;
-import com.moneymapper.budgettracker.mapper.CategoryMapper;
-import com.moneymapper.budgettracker.repository.CategoryRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/categories")
-@RequiredArgsConstructor
 public class CategoryController {
 
-    private final CategoryRepository categories;
-    private final CategoryMapper mapper;
+    private final CategoryService categoryService;
+
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     @GetMapping
-    public List<CategoryDto> all(@AuthenticationPrincipal User user) {
-        return categories.findByOwnerIsNullOrOwner(user).stream()
-                .map(mapper::toDto)
-                .toList();
+    public ResponseEntity<List<CategoryDto>> getAllRoots() {
+        List<Category> roots = categoryService.listRootCategoriesForCurrentUser();
+        List<CategoryDto> dtos = roots.stream()
+                .map(cat -> new CategoryDto(cat.getId(), cat.getName(),
+                        cat.getParent() == null ? null : cat.getParent().getId()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CategoryDto create(@RequestBody CreateCategoryRequest req,
-            @AuthenticationPrincipal User user) {
-
-        Category parent = req.parentId() == null
-                ? null
-                : categories.findById(req.parentId())
-                        .orElseThrow(() -> new IllegalArgumentException("parent not found"));
-
-        var saved = categories.save(new Category(req.name(), parent, user));
-        return mapper.toDto(saved);
+    public ResponseEntity<CategoryDto> create(@RequestBody CategoryDto dto) {
+        Category created = categoryService.createCategory(dto.getName(), dto.getParentId());
+        CategoryDto out = new CategoryDto(created.getId(), created.getName(),
+                created.getParent() == null ? null : created.getParent().getId());
+        return ResponseEntity.ok(out);
     }
 
-    @PatchMapping("/{id}")
-    public CategoryDto rename(@PathVariable Long id,
-            @RequestBody String newName,
-            @AuthenticationPrincipal User user) {
-
-        var original = categories.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("not found"));
-
-        // optional: owner-check => if (!original.getOwner().equals(user)) throw …
-
-        var replacement = new Category(newName, original.getParent(), original.getOwner());
-        categories.delete(original);
-        var saved = categories.save(replacement);
-        return mapper.toDto(saved);
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoryDto> update(@PathVariable Long id,
+            @RequestBody CategoryDto dto) {
+        Category updated = categoryService.updateCategory(id, dto.getName(), dto.getParentId());
+        CategoryDto out = new CategoryDto(updated.getId(), updated.getName(),
+                updated.getParent() == null ? null : updated.getParent().getId());
+        return ResponseEntity.ok(out);
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        categories.deleteById(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }
