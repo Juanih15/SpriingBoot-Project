@@ -18,21 +18,18 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String username;
 
-    /** BCrypt-hashed password. */
     @Column(nullable = false)
     private String password;
 
     private boolean enabled = true;
 
-    protected User() {
+    public User() {
     } // JPA only
 
     public User(String username, String password) {
         this.username = username;
         this.password = password;
     }
-
-    /* ------------ UserDetails ------------- */
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -69,7 +66,18 @@ public class User implements UserDetails {
         return enabled;
     }
 
-    /* getters if you need them elsewhere */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
     public Long getId() {
         return id;
     }
