@@ -1,12 +1,12 @@
 package com.moneymapper.budgettracker.domain;
 
 import jakarta.persistence.*;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import java.util.Collection;
-import java.util.Collections;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-/** Minimal user entity that plugs straight into Spring Security. */
+import java.util.*;
+
 @Entity
 @Table(name = "app_user")
 public class User implements UserDetails {
@@ -15,7 +15,7 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
 
     @Column(nullable = false)
@@ -23,17 +23,33 @@ public class User implements UserDetails {
 
     private boolean enabled = true;
 
-    public User() {
-    } // JPA only
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_role")
+    @Column(name = "role")
+    private Set<String> roles = Set.of("ROLE_USER");
 
-    public User(String username, String password) {
-        this.username = username;
-        this.password = password;
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Budget> budgets = new ArrayList<>();
+
+    // ctors
+    protected User() {
+    } // for JPA
+
+    public User(String username, String rawPw) { // ← keeps old callers happy
+        this(username, rawPw, Set.of("ROLE_USER"));
     }
 
+    public User(String username, String rawPw, Set<String> roles) {
+        this.username = username;
+        this.password = rawPw;
+        if (roles != null)
+            this.roles = roles;
+    }
+
+    // UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return roles.stream().map(SimpleGrantedAuthority::new).toList();
     }
 
     @Override
@@ -48,17 +64,17 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return enabled;
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return enabled;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return enabled;
+        return true;
     }
 
     @Override
@@ -66,19 +82,12 @@ public class User implements UserDetails {
         return enabled;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public Long getId() {
         return id;
+    }
+
+    public void addRole(String r) {
+        roles = new HashSet<>(roles);
+        roles.add(r);
     }
 }

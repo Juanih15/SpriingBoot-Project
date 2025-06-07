@@ -2,6 +2,7 @@ package com.moneymapper.budgettracker.repository;
 
 import com.moneymapper.budgettracker.domain.Budget;
 import com.moneymapper.budgettracker.domain.Expense;
+import com.moneymapper.budgettracker.domain.User;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -43,4 +44,11 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
        @Query("SELECT e.category.name, SUM(e.amount) "
                      + "FROM Expense e GROUP BY e.category.name")
        List<Object[]> sumByCategoryName();
+
+       List<Expense> findByBudget_Owner(User owner);
+
+       @Query("select e from Expense e where e.budget.id = :budgetId and e.budget.owner = :owner")
+       List<Expense> findByBudget(@Param("budgetId") Long budgetId,
+                     @Param("owner") User owner);
+
 }

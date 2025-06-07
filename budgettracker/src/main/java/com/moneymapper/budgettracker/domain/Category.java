@@ -22,7 +22,11 @@ public class Category {
     @ManyToOne(fetch = FetchType.LAZY)
     private User owner;
 
-    protected Category() {
+    protected Category() { // only jpa
+    }
+
+    public Category(String name) { // constructor for test file
+        this.name = name;
     }
 
     public Category(String name, Category parent, User owner) {

@@ -1,38 +1,31 @@
 package com.moneymapper.budgettracker.config;
 
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import com.moneymapper.budgettracker.domain.User;
 import com.moneymapper.budgettracker.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.boot.CommandLineRunner;
+
+import java.util.Set;
 
 @Configuration
-public class SeedUsers {
+@Profile("dev")
+@RequiredArgsConstructor
+public class SeedUsers implements CommandLineRunner {
 
     private final UserRepository userRepo;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder encoder;
 
-    public SeedUsers(UserRepository userRepo,
-            PasswordEncoder passwordEncoder) {
-        this.userRepo = userRepo;
-        this.passwordEncoder = passwordEncoder;
-    }
-
-    @Bean
-    public CommandLineRunner createDefaultUser() {
-        return args -> {
-            // Only seed “admin” if it doesn’t already exist
-            if (userRepo.findByUsername("admin").isEmpty()) {
-                User admin = new User();
-                admin.setUsername("admin");
-                // Always encode the raw password before saving
-                admin.setPassword(passwordEncoder.encode("admin123"));
-
-                userRepo.save(admin);
-                System.out.println("Created default user: admin / admin123");
-            }
-        };
+    @Override
+    public void run(String... args) {
+        userRepo.findByUsername("admin").ifPresentOrElse(
+                u -> {
+                }, // already seeded
+                () -> userRepo.save(
+                        new User("admin",
+                                encoder.encode("admin123"),
+                                Set.of("ROLE_ADMIN"))));
     }
 }

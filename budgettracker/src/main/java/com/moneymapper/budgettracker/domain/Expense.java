@@ -15,18 +15,37 @@ public class Expense {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Category category;
 
-    /** Optional: link each expense to a budget period */
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "budget_id")
     private Budget budget;
+
+    public void setBudget(Budget b) {
+        this.budget = b;
+    }
+
+    public Budget getBudget() {
+        return budget;
+    } // used in the test
 
     private BigDecimal amount;
     private LocalDate date;
 
-    /** Optional free-text memo / note */
+    // Optional free-text memo
     private String memo;
+
+    @Column(length = 120)
+    private String description;
 
     protected Expense() {
     } // JPA
+
+    public Expense(Category category,
+            String description,
+            BigDecimal amount,
+            LocalDate date) {
+        this(category, (Budget) null, amount, date);
+        this.description = description;
+    }
 
     // full 4-arg ctor (category, budget, amount, date)
     public Expense(Category category,
@@ -43,7 +62,7 @@ public class Expense {
     public Expense(Category category,
             BigDecimal amount,
             LocalDate date) {
-        this(category, null, amount, date);
+        this(category, (Budget) null, amount, date);
     }
 
     public Long getId() {
@@ -52,10 +71,6 @@ public class Expense {
 
     public Category getCategory() {
         return category;
-    }
-
-    public Budget getBudget() {
-        return budget;
     }
 
     public BigDecimal getAmount() {
@@ -74,10 +89,6 @@ public class Expense {
         this.category = c;
     }
 
-    public void setBudget(Budget b) {
-        this.budget = b;
-    }
-
     public void setAmount(BigDecimal a) {
         this.amount = a;
     }
@@ -89,4 +100,9 @@ public class Expense {
     public void setMemo(String m) {
         this.memo = m;
     }
+
+    public String getDescription() {
+        return description;
+    }
+
 }
