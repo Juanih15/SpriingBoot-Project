@@ -15,7 +15,8 @@ public class Budget {
     private Long id;
 
     private String name;
-    private BigDecimal limit;
+    @Column(name = "budget_limit")
+    private BigDecimal budgetLimit;
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -34,7 +35,7 @@ public class Budget {
     public Budget(String name, BigDecimal limit,
             LocalDate start, LocalDate end) {
         this.name = name;
-        this.limit = limit;
+        this.budgetLimit = limit;
         this.startDate = start;
         this.endDate = end;
     }
