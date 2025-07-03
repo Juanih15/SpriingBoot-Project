@@ -24,7 +24,7 @@ public class BudgetService {
 
     private final Clock clock = Clock.systemDefaultZone();
 
-    public ExpenseDTO addExpense(NewExpenseDTO dto, User owner) {
+    public ExpenseDTO addExpense(ExpenseDTO dto, User owner) {
 
         Category cat = categoryRepo.findById(dto.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("category not found"));

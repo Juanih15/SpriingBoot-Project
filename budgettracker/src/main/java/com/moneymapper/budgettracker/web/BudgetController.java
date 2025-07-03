@@ -16,7 +16,7 @@ public class BudgetController {
     private final BudgetService budgets;
 
     @PostMapping("/expenses")
-    public ResponseEntity<ExpenseDTO> addExpense(@RequestBody NewExpenseDTO body,
+    public ResponseEntity<ExpenseDTO> addExpense(@RequestBody ExpenseDTO body,
             @AuthenticationPrincipal User user) {
         ExpenseDTO dto = budgets.addExpense(body, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);

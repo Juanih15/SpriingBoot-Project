@@ -13,11 +13,16 @@ public class Expense {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "budget_id")
     private Budget budget;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id") // column name in expense table referencing user.id
+    private User user;
 
     public void setBudget(Budget b) {
         this.budget = b;
@@ -105,4 +110,19 @@ public class Expense {
         return description;
     }
 
+    public LocalDate getExpenseDate() {return date;}
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public void setDescription(String description) {this.description = description;
+    }
+
+    public void setExpenseDate(LocalDate localDate) {this.date = localDate;
+    }
 }
