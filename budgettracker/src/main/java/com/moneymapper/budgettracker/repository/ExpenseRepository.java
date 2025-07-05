@@ -6,10 +6,13 @@ import com.moneymapper.budgettracker.domain.User;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
@@ -51,4 +54,12 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
        List<Expense> findByBudget(@Param("budgetId") Long budgetId,
                      @Param("owner") User owner);
 
+       @Query("select e from Expense e where e.category.id = :id")
+       List<Expense> findByCategoryId(Long id);
+
+       @Modifying
+       @Query("DELETE FROM Expense e WHERE e.date BETWEEN :start AND :end")
+       int deleteByExpenseDateBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }
+
+       

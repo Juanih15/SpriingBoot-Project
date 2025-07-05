@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-public record BudgetWithExpensesDTO(
+public record BudgetWithExpenseDTO(
         Long id,
         String name,
         BigDecimal budgetLimit,

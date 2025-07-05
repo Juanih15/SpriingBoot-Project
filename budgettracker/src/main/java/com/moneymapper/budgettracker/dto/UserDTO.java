@@ -1,4 +1,10 @@
 package com.moneymapper.budgettracker.dto;
 
-public record UserDTO() {
-}
+import java.util.Set;
+
+public record UserDTO(
+        Long id,
+        String username,
+        boolean enabled,
+        Set<String> roles
+) {}

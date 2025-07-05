@@ -9,16 +9,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface BudgetRepository extends JpaRepository<Budget, Long> {
 
-  // Most-recent period,used by dashboard
+  // Most-recent period, used by dashboard
   Optional<Budget> findTopByOwnerOrderByStartDateDesc(User owner);
 
   // Fetch along with expenses in one roundtrip
   @EntityGraph(attributePaths = "expenses")
   Optional<Budget> findByIdAndOwner(Long id, User owner);
+
+  // Get all budgets for a user, ordered by start date (newest first)
+  List<Budget> findAllByOwnerOrderByStartDateDesc(User owner);
 
   // Active budget on a given date
   @Query("""
@@ -30,5 +34,5 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
           limit 1
       """)
   Optional<Budget> findActiveBudget(@Param("owner") User owner,
-      @Param("day") LocalDate day);
+                                    @Param("day") LocalDate day);
 }

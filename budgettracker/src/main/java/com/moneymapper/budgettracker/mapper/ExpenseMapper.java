@@ -9,9 +9,11 @@ public final class ExpenseMapper {
 
     public static ExpenseDTO toDto(Expense e) {
         return new ExpenseDTO(
-                e.getId(),
                 e.getAmount(),
+                e.getDescription(),
+                e.getExpenseDate(),
                 e.getMemo(),
-                e.getCategory().getName());
+                e.getCategory().getId(),
+                e.getUser().getId());
     }
 }

@@ -49,8 +49,43 @@ public class Budget {
         return owner;
     }
 
-    public void addExpense(Expense e) {
-        expenses.add(e);
-        e.setBudget(this);
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public BigDecimal getBudgetLimit() {
+        return budgetLimit;
+    }
+
+    public void setBudgetLimit(BigDecimal budgetLimit) {
+        this.budgetLimit = budgetLimit;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public List<Expense> getExpenses() {
+        return expenses;
     }
 }
