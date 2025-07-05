@@ -25,8 +25,8 @@ public class BudgetService {
     private final ExpenseRepository expenseRepo;
     private final Clock clock = Clock.systemDefaultZone();
 
-    // Existing methods
-    public ExpenseDTO addExpense(ExpenseDTO dto, User owner) {
+    public ExpenseDTO addExpense(NewExpenseDTO dto, User owner) {
+
         Category cat = categoryRepo.findById(dto.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("category not found"));
 
@@ -125,8 +125,7 @@ public class BudgetService {
                 budget.getEndDate(),
                 expenses,
                 totalSpent,
-                remaining
-        );
+                remaining);
     }
 
     // Helper methods
@@ -142,7 +141,6 @@ public class BudgetService {
                 budget.getBudgetLimit(),
                 budget.getStartDate(),
                 budget.getEndDate(),
-                budget.getOwner().getId()
-        );
+                budget.getOwner().getId());
     }
 }
