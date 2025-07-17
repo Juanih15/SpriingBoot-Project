@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import type { Category } from "./types";
+import type { Category } from "./types.ts";
 
 export default function AddExpense({ onAdded }: { onAdded: () => void }) {
   const [category, setCategory] = useState<Category>("GROCERIES");

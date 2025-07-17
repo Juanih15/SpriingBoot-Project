@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Totals } from "./types";
+import type { Totals } from "./types.ts";
 
 export default function Summary({ refreshTrigger }: { refreshTrigger: number }) {
   const [data, setData] = useState<Totals>({});

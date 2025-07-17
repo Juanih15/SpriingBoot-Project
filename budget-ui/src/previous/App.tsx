@@ -1,6 +1,6 @@
 import { useState } from "react";
-import AddExpense from "./AddExpense";
-import Summary from "./Summary";
+import AddExpense from "./AddExpense.tsx";
+import Summary from "./Summary.tsx";
 
 export default function App() {
   const [refresh, setRefresh] = useState(0);
