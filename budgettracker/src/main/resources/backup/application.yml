@@ -1,22 +1,75 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
-    username: postgres
-    password: jason
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-    open-in-view: false
-    show-sql: true
-
-  h2:
-    console:
-      enabled: false
-
-  security:
-    user:
-      name: dev
-      password: dev
+# Database Configuration
+spring.datasource.url=jdbc:postgresql://localhost:5432/postgres
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.username=postgres
+spring.datasource.password=jason
+  
+  # JPA Configuration
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.default_schema=budgettracker
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+  
+  # H2 Console (for development)
+spring.h2.console.enabled=false
+spring.h2.console.path=/h2-console
+  
+  # JWT Configuration
+jwt.secret=myVerySecretKeyThatShouldBeAtLeast256BitsLongForHS256Algorithm
+jwt.expiration=86400000
+  
+  # Email Configuration (SMTP)
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=your-email@gmail.com
+spring.mail.password=your-app-password
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+spring.mail.properties.mail.smtp.ssl.trust=smtp.gmail.com
+  
+  # Custom Email Settings
+app.mail.from=noreply@moneymapper.com
+app.mail.base-url=http://localhost:3000
+  
+  # Redis Configuration (for rate limiting)
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+spring.data.redis.password=
+spring.data.redis.timeout=2000ms
+spring.data.redis.database=0
+  
+  # Async Configuration
+spring.task.execution.pool.core-size=5
+spring.task.execution.pool.max-size=10
+spring.task.execution.pool.queue-capacity=25
+spring.task.execution.thread-name-prefix=async-
+  
+  # Security Configuration (fallback for dev profile)
+spring.security.user.name=tester
+spring.security.user.password=secret
+spring.security.user.roles=ADMIN
+  
+  # Rate Limiting Configuration
+app.rate-limit.login.attempts=5
+app.rate-limit.login.window-minutes=15
+app.rate-limit.registration.attempts=3
+app.rate-limit.registration.window-hours=1
+app.rate-limit.password-reset.attempts=3
+app.rate-limit.password-reset.window-hours=1
+  
+  # Security Audit Configuration
+app.security.audit.cleanup-days=90
+app.security.suspicious-activity.max-failed-attempts=5
+app.security.suspicious-activity.time-window-hours=1
+  
+  # Two-Factor Authentication
+app.2fa.issuer=MoneyMapper
+app.2fa.backup-codes.count=10
+  
+  # Token Blacklist Configuration
+app.security.token-blacklist.cleanup-enabled=true
+  
+  # Logging
+logging.level.com.moneymapper.budgettracker=DEBUG
+logging.level.org.springframework.security=DEBUG
+logging.level.org.springframework.mail=DEBUG

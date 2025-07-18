@@ -9,5 +9,12 @@ public record ChangePasswordRequest(
 
         @NotBlank(message = "New password is required")
         @Size(min = 8, message = "New password must be at least 8 characters")
-        String newPassword
-) {}
+        String newPassword,
+
+        @NotBlank(message = "Password confirmation is required")
+        String confirmPassword
+) {
+        public boolean isPasswordMatching() {
+                return newPassword != null && newPassword.equals(confirmPassword);
+        }
+}

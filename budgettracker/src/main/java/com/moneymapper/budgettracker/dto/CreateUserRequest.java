@@ -1,7 +1,10 @@
 package com.moneymapper.budgettracker.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
+import java.util.Set;
 
 public record CreateUserRequest(
         @NotBlank(message = "Username is required")
@@ -10,5 +13,10 @@ public record CreateUserRequest(
 
         @NotBlank(message = "Password is required")
         @Size(min = 8, message = "Password must be at least 8 characters")
-        String password
+        String password,
+
+        @Email(message = "Email must be valid")
+        String email,
+
+        Set<String> roles
 ) {}
