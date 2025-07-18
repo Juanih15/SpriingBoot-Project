@@ -1,7 +1,7 @@
 package com.moneymapper.budgettracker.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RateLimitingService {
 
@@ -31,6 +30,11 @@ public class RateLimitingService {
 
     private static final int EMAIL_VERIFICATION_LIMIT = 5;
     private static final int EMAIL_VERIFICATION_WINDOW_HOURS = 1;
+
+    // Constructor with @Qualifier to specify which Redis template to use
+    public RateLimitingService(@Qualifier("stringRedisTemplate") RedisTemplate<String, String> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     public boolean isLoginAllowed(String identifier) {
         return isActionAllowed("login:" + identifier, LOGIN_ATTEMPTS_LIMIT, Duration.ofMinutes(LOGIN_WINDOW_MINUTES));
