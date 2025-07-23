@@ -7,10 +7,17 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useNavigate } from 'react-router-dom'
 
 const loginSchema = yup.object({
-    email: yup
+    usernameOrEmail: yup
         .string()
-        .email('Please enter a valid email address')
-        .required('Email is required'),
+        .required('Username or email is required')
+        .test('username-or-email', 'Please enter a valid username or email', function(value) {
+            if (!value) return false;
+            // Check if it's an email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // Check if it's a valid username (alphanumeric, underscore, dash, min 3 chars)
+            const usernameRegex = /^[a-zA-Z0-9_-]{3,}$/;
+            return emailRegex.test(value) || usernameRegex.test(value);
+        }),
     password: yup
         .string()
         .min(6, 'Password must be at least 6 characters')
@@ -31,13 +38,15 @@ const LoginPage = () => {
         resolver: yupResolver(loginSchema),
     })
 
-
     const onSubmit = async (data) => {
         setIsLoading(true)
         setLoginError('')
 
         try {
-            const result = await login(data.email, data.password)
+            console.log('Form data:', data); // Debug log
+            console.log('Calling login with:', data.usernameOrEmail, 'and password length:', data.password?.length);
+
+            const result = await login(data.usernameOrEmail, data.password)
 
             if (result.success) {
                 navigate('/')
@@ -45,7 +54,24 @@ const LoginPage = () => {
                 setLoginError(result.error)
             }
         } catch (error) {
+            console.error('Login error:', error); // Debug log
             setLoginError('An unexpected error occurred. Please try again.')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleDevBypass = async () => {
+        setIsLoading(true)
+        try {
+            const result = await devBypass()
+            if (result.success) {
+                navigate('/')
+            } else {
+                setLoginError('Dev bypass failed')
+            }
+        } catch (error) {
+            setLoginError('Dev bypass failed')
         } finally {
             setIsLoading(false)
         }
@@ -71,19 +97,19 @@ const LoginPage = () => {
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
                     <div className="rounded-md shadow-sm space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                                Email address
+                            <label htmlFor="usernameOrEmail" className="block text-sm font-medium text-gray-700">
+                                Username or Email
                             </label>
                             <input
-                                id="email"
-                                type="email"
-                                autoComplete="email"
-                                className={`mt-1 input-field ${errors.email ? 'border-red-500' : ''}`}
-                                placeholder="Enter your email"
-                                {...register('email')}
+                                id="usernameOrEmail"
+                                type="text"
+                                autoComplete="username email"
+                                className={`mt-1 input-field ${errors.usernameOrEmail ? 'border-red-500' : ''}`}
+                                placeholder="Enter your username or email"
+                                {...register('usernameOrEmail')}
                             />
-                            {errors.email && (
-                                <p className="form-error">{errors.email.message}</p>
+                            {errors.usernameOrEmail && (
+                                <p className="form-error">{errors.usernameOrEmail.message}</p>
                             )}
                         </div>
 
@@ -169,17 +195,26 @@ const LoginPage = () => {
                         </p>
                     </div>
                 </form>
-                {/* ✅ Bypass button here */}
-                <button
-                    type="button"
-                    onClick={() => {
-                        devBypass();
-                        navigate('/');
-                    }}
-                    className="mt-4 text-center text-blue-600 hover:underline block"
-                >
-                    Skip login (dev only)
-                </button>
+
+                {/* Dev bypass button and test credentials info */}
+                <div className="mt-6 space-y-4">
+                    <button
+                        type="button"
+                        onClick={handleDevBypass}
+                        disabled={isLoading}
+                        className="w-full text-center text-blue-600 hover:text-blue-800 hover:underline block text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Skip login (dev only - uses demo account)
+                    </button>
+
+                    {/* Test credentials info for development */}
+                    <div className="text-center text-xs text-gray-500 space-y-1">
+                        <p className="font-semibold">Test Accounts:</p>
+                        <p>Admin: admin / admin123</p>
+                        <p>Demo: demo / demo123</p>
+                        <p>Test: testuser / password123</p>
+                    </div>
+                </div>
             </div>
         </div>
     )

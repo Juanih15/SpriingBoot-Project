@@ -77,10 +77,10 @@ public class EnhancedAuthController {
         try {
             String ipAddress = ClientIpUtils.getClientIpAddress(request);
             String userAgent = request.getHeader("User-Agent");
-
+            System.out.println("Login attempt from IP: " + ipAddress + ", User-Agent: " + userAgent);
             JwtResponse jwtResponse = enhancedAuthService.authenticateWithTwoFactor(
                     loginRequest, totpCode, ipAddress, userAgent);
-
+            System.out.println("Login successful for user: " + jwtResponse.toString());
             return ResponseEntity.ok(ApiResponse.success("Login successful", jwtResponse));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)

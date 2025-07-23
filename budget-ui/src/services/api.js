@@ -41,56 +41,79 @@ api.interceptors.response.use(
 )
 
 // Auth service
+// Auth service
 export const authService = {
-    login: (email, password) =>
-        api.post('/auth/login', { email, password }),
+    // Update login to use correct endpoint and request format
+    login: (usernameOrEmail, password) =>
+        api.post('/auth/login', {
+            username: usernameOrEmail,  // Backend LoginRequest expects 'username' field
+            password: password
+        }),
 
     register: (userData) =>
         api.post('/auth/register', userData),
 
+    logout: () =>
+        api.post('/auth/logout'),
+
+    // Get current user
     getCurrentUser: () =>
         api.get('/auth/me'),
 
-    refreshToken: () =>
-        api.post('/auth/refresh'),
+    // Password reset endpoints
+    forgotPassword: (usernameOrEmail) =>
+        api.post('/auth/forgot-password', null, {
+            params: { usernameOrEmail }
+        }),
 
-    logout: () =>
-        api.post('/auth/logout'),
+    resetPassword: (token, newPassword) =>
+        api.post('/auth/reset-password', null, {
+            params: { token, newPassword }
+        }),
+
+    // Email verification
+    verifyEmail: (token) =>
+        api.post('/auth/verify-email', null, {
+            params: { token }
+        }),
+
+    resendVerification: (usernameOrEmail) =>
+        api.post('/auth/resend-verification', null, {
+            params: { usernameOrEmail }
+        }),
 }
 
 // Budget service
 export const budgetService = {
     // Dashboard data
     getDashboardData: () =>
-        api.get('/budget/dashboard'),
+        api.get('/budgets/dashboard'),
 
-    // Budget categories
-    getCategories: () =>
-        api.get('/budget/categories'),
+    // Budgets
+    createBudget: (budgetData) =>
+        api.post('/budgets', budgetData),
 
-    createCategory: (categoryData) =>
-        api.post('/budget/categories', categoryData),
+    getUserBudgets: () =>
+        api.get('/budgets'),
 
-    updateCategory: (id, categoryData) =>
-        api.put(`/budget/categories/${id}`, categoryData),
+    getBudget: (id) =>
+        api.get(`/budgets/${id}`),
 
-    deleteCategory: (id) =>
-        api.delete(`/budget/categories/${id}`),
+    updateBudget: (id, budgetData) =>
+        api.put(`/budgets/${id}`, budgetData),
 
-    // Transactions
-    getTransactions: (params = {}) =>
-        api.get('/budget/transactions', { params }),
+    deleteBudget: (id) =>
+        api.delete(`/budgets/${id}`),
 
-    createTransaction: (transactionData) =>
-        api.post('/budget/transactions', transactionData),
+    getBudgetWithExpenses: (id) =>
+        api.get(`/budgets/${id}/expenses`),
 
-    updateTransaction: (id, transactionData) =>
-        api.put(`/budget/transactions/${id}`, transactionData),
+    // Add expense to budget
+    addExpense: (expenseData) =>
+        api.post('/budgets/expenses', expenseData),
 
-    deleteTransaction: (id) =>
-        api.delete(`/budget/transactions/${id}`),
-
-    // Budget reports
+    // Monthly and yearly reports - these endpoints don't exist in controllers
+    // You may need to implement these in your backend
     getMonthlyReport: (year, month) =>
         api.get(`/budget/reports/monthly/${year}/${month}`),
 
@@ -101,19 +124,89 @@ export const budgetService = {
         api.get(`/budget/reports/category/${categoryId}`, { params }),
 }
 
+// Category service
+export const categoryService = {
+    getCategories: () =>
+        api.get('/categories'),
+
+    createCategory: (categoryData) =>
+        api.post('/categories', categoryData),
+
+    updateCategory: (id, categoryData) =>
+        api.put(`/categories/${id}`, categoryData),
+
+    deleteCategory: (id) =>
+        api.delete(`/categories/${id}`),
+}
+
+// Expense service
+export const expenseService = {
+    // Add expense with query parameters
+    addExpense: (categoryId, amount) =>
+        api.post('/expenses', null, {
+            params: { categoryId, amount }
+        }),
+
+    // Get expense summary
+    getExpenseSummary: () =>
+        api.get('/expenses/summary'),
+
+    // Get expenses by category
+    getExpensesByCategory: (categoryId) =>
+        api.get(`/expenses/category/${categoryId}`),
+
+    // Update expense
+    updateExpense: (id, expenseData) =>
+        api.patch(`/expenses/${id}`, expenseData),
+
+    // Delete single expense
+    deleteExpense: (id) =>
+        api.delete(`/expenses/${id}`),
+
+    // Delete expenses in time frame
+    deleteExpensesInTimeFrame: (startDate, endDate) =>
+        api.delete('/expenses', {
+            params: { startDate, endDate }
+        }),
+}
+
 // User service
 export const userService = {
-    getProfile: () =>
-        api.get('/user/profile'),
+    // Get current user profile
+    getCurrentUser: () =>
+        api.get('/users/me'),
 
+    // Get all users (admin only)
+    getAllUsers: () =>
+        api.get('/users'),
+
+    // Get user by ID
+    getUser: (id) =>
+        api.get(`/users/${id}`),
+
+    // Create user (registration alternative)
+    createUser: (userData) =>
+        api.post('/users', userData),
+
+    // Update current user profile
     updateProfile: (profileData) =>
-        api.put('/user/profile', profileData),
+        api.put('/users/me', profileData),
 
+    // Update any user by ID (admin)
+    updateUser: (id, userData) =>
+        api.put(`/users/${id}`, userData),
+
+    // Change password
     changePassword: (passwordData) =>
-        api.put('/user/password', passwordData),
+        api.patch('/users/me/password', passwordData),
 
+    // Delete current user account
     deleteAccount: () =>
-        api.delete('/user/account'),
+        api.delete('/users/me'),
+
+    // Delete user by ID (admin)
+    deleteUser: (id) =>
+        api.delete(`/users/${id}`),
 }
 
 export default api

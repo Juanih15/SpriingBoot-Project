@@ -399,10 +399,18 @@ public class UserService implements UserDetailsService {
 
     @Override
     @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.debug("Loading user by username: {}", username);
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+        log.debug("Loading user by username or email: {}", usernameOrEmail);
+
+        // First try to find by username
+        Optional<User> user = userRepository.findByEmail(usernameOrEmail);
+
+        // If not found by username, try by email
+        if (user.isEmpty()) {
+            user = userRepository.findByUsername(usernameOrEmail);
+        }
+
+        return user.orElseThrow(() -> new UsernameNotFoundException("User not found: " + usernameOrEmail));
     }
 
     // ==================== Admin Operations (Missing Methods) ====================

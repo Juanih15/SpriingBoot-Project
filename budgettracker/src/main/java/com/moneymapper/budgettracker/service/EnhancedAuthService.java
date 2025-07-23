@@ -221,8 +221,8 @@ public class EnhancedAuthService {
                     cooldown.toMinutes() + " minutes.");
         }
 
-        // Verify credentials
-        Optional<User> userOpt = userService.findByUsername(loginRequest.username());
+        // Verify credentials - CHANGED to support both username and email
+        Optional<User> userOpt = userService.findByUsernameOrEmail(loginRequest.username());
         if (userOpt.isEmpty() || !userService.getPasswordEncoder().matches(loginRequest.password(), userOpt.get().getPassword())) {
             rateLimitingService.recordLoginAttempt(loginRequest.username());
             auditService.logSecurityEvent(loginRequest.username(), SecurityAuditLog.SecurityAction.LOGIN_FAILURE,

@@ -2,6 +2,7 @@ package com.moneymapper.budgettracker.service;
 
 import com.moneymapper.budgettracker.domain.Category;
 import com.moneymapper.budgettracker.domain.User;
+import com.moneymapper.budgettracker.dto.UserReadDTO;
 import com.moneymapper.budgettracker.repository.CategoryRepository;
 
 import jakarta.transaction.Transactional;

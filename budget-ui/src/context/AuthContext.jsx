@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { authService } from '../services/api'
+import {authService, userService} from '../services/api'
 
 const AuthContext = createContext()
 
@@ -20,38 +20,67 @@ export const AuthProvider = ({ children }) => {
             try {
                 const token = localStorage.getItem('token')
                 if (token) {
-                    // Validate token with backend
-                    const userData = await authService.getCurrentUser()
-                    setUser(userData)
+                    // Check if it's a dev/mock token
+                    if (token === 'dev-bypass-token' || token.includes('mock-signature')) {
+                        // Use mock user data for dev tokens
+                        const mockUser = {
+                            email: 'dev@bypass.com',
+                            name: 'Dev User',
+                            id: 'dev-user-id'
+                        };
+                        setUser(mockUser);
+                    } else {
+                        // Validate real token with backend
+                        const userData = await authService.getCurrentUser();
+                        setUser(userData);
+                    }
                 }
             } catch (error) {
-                console.error('Token validation failed:', error)
-                localStorage.removeItem('token')
+                console.error('Token validation failed:', error);
+                localStorage.removeItem('token');
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
         }
 
         initializeAuth()
     }, [])
 
-    const login = async (email, password) => {
+    const login = async (usernameOrEmail, password) => {
+        console.log('=== AUTH CONTEXT LOGIN CALLED ===');
+        console.log('Username/Email:', usernameOrEmail);
+        console.log('Password provided:', !!password);
+
         try {
-            const response = await authService.login(email, password)
-            const { token, user: userData } = response.data
+            console.log('Calling authService.login...');
+            const response = await authService.login(usernameOrEmail, password)
+            console.log('Auth service response:', response);
 
-            localStorage.setItem('token', token)
-            setUser(userData)
+            // Handle the ApiResponse wrapper structure
+            if (response.data.success) {
+                const { token, user: userData } = response.data.data // JwtResponse is in data.data
 
-            return { success: true }
+                console.log('Login successful, storing token');
+                localStorage.setItem('token', token)
+                setUser(userData)
+
+                return { success: true }
+            } else {
+                return {
+                    success: false,
+                    error: response.data.message || 'Login failed'
+                }
+            }
         } catch (error) {
             console.error('Login failed:', error)
+            console.error('Error response:', error.response?.data)
             return {
                 success: false,
                 error: error.response?.data?.message || 'Login failed. Please try again.'
             }
         }
     }
+
 
     const logout = () => {
         localStorage.removeItem('token')
@@ -80,15 +109,23 @@ export const AuthProvider = ({ children }) => {
         setUser(prevUser => ({ ...prevUser, ...userData }))
     }
 
-    const devBypass = () => {
-        const dummyUser = {
-            email: 'dev@bypass.com',
-            name: 'Dev User',
-            // add any other user fields your app expects
-        };
+    const devBypass = async () => {
+        try {
+            // Use one of the seeded users
+            const response = await authService.login('demo', 'demo123');
 
-        localStorage.setItem('token', 'dev-bypass-token');
-        setUser(dummyUser);
+            if (response.data.success) {
+                const { token, user } = response.data.data;
+                localStorage.setItem('token', token);
+                setUser(user);
+                return { success: true };
+            } else {
+                return { success: false, error: response.data.message };
+            }
+        } catch (error) {
+            console.error('Dev bypass error:', error);
+            return { success: false, error: 'Dev bypass failed' };
+        }
     };
 
     const value = {

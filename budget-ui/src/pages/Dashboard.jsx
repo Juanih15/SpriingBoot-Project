@@ -5,13 +5,12 @@ import { budgetService } from '../services/api'
 const Dashboard = () => {
     const { user } = useAuth()
     const [dashboardData, setDashboardData] = useState({
-        totalIncome: 0,
         totalExpenses: 0,
-        balance: 0,
-        recentTransactions: [],
         monthlyBudget: 0,
         budgetUsed: 0,
-    })
+        budgetRemaining: 0,
+        recentTransactions: [],
+    });
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -21,32 +20,32 @@ const Dashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
-            setLoading(true)
-            // Uncomment when backend is ready
-            // const response = await budgetService.getDashboardData()
-            // setDashboardData(response.data)
+            setLoading(true);
+            const response = await budgetService.getDashboardData();
+            setDashboardData(response.data);
 
-            // Mock data for now
-            setTimeout(() => {
-                setDashboardData({
-                    totalIncome: 5000,
-                    totalExpenses: 3200,
-                    balance: 1800,
-                    recentTransactions: [
-                        { id: 1, description: 'Grocery Shopping', amount: -120, category: 'Food', date: '2024-01-15' },
-                        { id: 2, description: 'Salary', amount: 5000, category: 'Income', date: '2024-01-01' },
-                        { id: 3, description: 'Utilities', amount: -200, category: 'Bills', date: '2024-01-10' },
-                    ],
-                    monthlyBudget: 4000,
-                    budgetUsed: 3200,
-                })
-                setLoading(false)
-            }, 1000)
+            // test data
+            // setTimeout(() => {
+            //     setDashboardData({
+            //         totalExpenses: 3200,
+            //         monthlyBudget: 4000,
+            //         budgetUsed: 3200,
+            //         budgetRemaining: 800,
+            //         recentTransactions: [
+            //             { id: 1, description: 'Grocery Shopping', amount: -120, category: 'Food', date: '2024-01-15' },
+            //             { id: 2, description: 'Gas Station', amount: -45, category: 'Transportation', date: '2024-01-14' },
+            //             { id: 3, description: 'Utilities', amount: -200, category: 'Bills', date: '2024-01-10' },
+            //         ],
+            //     })
+            //     setLoading(false)
+            // }, 1000)
         } catch (err) {
-            setError('Failed to load dashboard data')
-            setLoading(false)
+            console.error(err);
+            setError('Failed to load dashboard data');
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
@@ -99,14 +98,14 @@ const Dashboard = () => {
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Total Income</p>
-                            <p className="text-2xl font-bold text-green-600">
-                                {formatCurrency(dashboardData.totalIncome)}
+                            <p className="text-sm font-medium text-gray-600">Monthly Budget</p>
+                            <p className="text-2xl font-bold text-blue-600">
+                                {formatCurrency(dashboardData.monthlyBudget)}
                             </p>
                         </div>
-                        <div className="bg-green-100 p-3 rounded-full">
-                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                        <div className="bg-blue-100 p-3 rounded-full">
+                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
                         </div>
                     </div>
@@ -131,13 +130,13 @@ const Dashboard = () => {
                 <div className="bg-white rounded-lg shadow-md p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-gray-600">Balance</p>
-                            <p className={`text-2xl font-bold ${dashboardData.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {formatCurrency(dashboardData.balance)}
+                            <p className="text-sm font-medium text-gray-600">Budget Remaining</p>
+                            <p className={`text-2xl font-bold ${dashboardData.budgetRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {formatCurrency(dashboardData.budgetRemaining)}
                             </p>
                         </div>
-                        <div className={`p-3 rounded-full ${dashboardData.balance >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                            <svg className={`w-6 h-6 ${dashboardData.balance >= 0 ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className={`p-3 rounded-full ${dashboardData.budgetRemaining >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                            <svg className={`w-6 h-6 ${dashboardData.budgetRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                             </svg>
                         </div>
@@ -149,12 +148,12 @@ const Dashboard = () => {
             <div className="bg-white rounded-lg shadow-md p-6 mb-8">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Budget Progress</h2>
                 <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-600">
-            {formatCurrency(dashboardData.budgetUsed)} of {formatCurrency(dashboardData.monthlyBudget)}
-          </span>
                     <span className="text-sm text-gray-600">
-            {budgetPercentage.toFixed(1)}%
-          </span>
+                        {formatCurrency(dashboardData.budgetUsed)} of {formatCurrency(dashboardData.monthlyBudget)}
+                    </span>
+                    <span className="text-sm text-gray-600">
+                        {budgetPercentage.toFixed(1)}%
+                    </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
@@ -167,7 +166,7 @@ const Dashboard = () => {
                 <p className="text-sm text-gray-600 mt-2">
                     {budgetPercentage > 100
                         ? `You're ${formatCurrency(dashboardData.budgetUsed - dashboardData.monthlyBudget)} over budget this month!`
-                        : `You have ${formatCurrency(dashboardData.monthlyBudget - dashboardData.budgetUsed)} left to spend this month.`
+                        : `You have ${formatCurrency(dashboardData.budgetRemaining)} left to spend this month.`
                     }
                 </p>
             </div>

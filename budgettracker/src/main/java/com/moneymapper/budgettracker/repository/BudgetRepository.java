@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -35,4 +36,13 @@ public interface BudgetRepository extends JpaRepository<Budget, Long> {
       """)
   Optional<Budget> findActiveBudget(@Param("owner") User owner,
                                     @Param("day") LocalDate day);
+
+  @Query("""
+    SELECT COALESCE(b.budgetLimit, 0)
+    FROM Budget b
+    WHERE b.owner.id = :userId
+      AND :today BETWEEN b.startDate AND b.endDate
+    ORDER BY b.startDate DESC
+""")
+  List<BigDecimal> findActiveBudgetLimits(@Param("userId") Long userId, @Param("today") LocalDate today);
 }

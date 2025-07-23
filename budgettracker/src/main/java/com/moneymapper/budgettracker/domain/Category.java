@@ -1,5 +1,6 @@
 package com.moneymapper.budgettracker.domain;
 
+import com.moneymapper.budgettracker.dto.UserReadDTO;
 import jakarta.persistence.*;
 import java.util.Objects;
 
@@ -34,6 +35,7 @@ public class Category {
         this.parent = parent;
         this.owner = owner;
     }
+
 
     public Long getId() {
         return id;
