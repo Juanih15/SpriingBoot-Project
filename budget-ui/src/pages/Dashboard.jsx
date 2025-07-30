@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react'
+// Optimized Dashboard Component with proper data fetching
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { budgetService } from '../services/api'
 
@@ -14,38 +15,58 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
-    useEffect(() => {
-        fetchDashboardData()
-    }, [])
+    // Use refs to prevent duplicate requests
+    const isLoadingRef = useRef(false)
+    const lastFetchTime = useRef(0)
+    const CACHE_DURATION = 30000 // 30 seconds cache
 
-    const fetchDashboardData = async () => {
-        try {
-            setLoading(true);
-            const response = await budgetService.getDashboardData();
-            setDashboardData(response.data);
-
-            // test data
-            // setTimeout(() => {
-            //     setDashboardData({
-            //         totalExpenses: 3200,
-            //         monthlyBudget: 4000,
-            //         budgetUsed: 3200,
-            //         budgetRemaining: 800,
-            //         recentTransactions: [
-            //             { id: 1, description: 'Grocery Shopping', amount: -120, category: 'Food', date: '2024-01-15' },
-            //             { id: 2, description: 'Gas Station', amount: -45, category: 'Transportation', date: '2024-01-14' },
-            //             { id: 3, description: 'Utilities', amount: -200, category: 'Bills', date: '2024-01-10' },
-            //         ],
-            //     })
-            //     setLoading(false)
-            // }, 1000)
-        } catch (err) {
-            console.error(err);
-            setError('Failed to load dashboard data');
-        } finally {
-            setLoading(false);
+    const fetchDashboardData = useCallback(async (forceRefresh = false) => {
+        // Prevent duplicate requests
+        if (isLoadingRef.current) {
+            return
         }
-    };
+
+        // Check cache duration
+        const now = Date.now()
+        if (!forceRefresh && (now - lastFetchTime.current) < CACHE_DURATION) {
+            return
+        }
+
+        try {
+            setError('')
+            isLoadingRef.current = true
+
+            // Only show loading on initial load or force refresh
+            if (forceRefresh || dashboardData.totalExpenses === 0) {
+                setLoading(true)
+            }
+
+            const response = await budgetService.getDashboardData()
+
+            if (response.data?.success) {
+                setDashboardData(response.data.data)
+                lastFetchTime.current = now
+            } else {
+                throw new Error(response.data?.error || 'Failed to load dashboard data')
+            }
+        } catch (err) {
+            console.error('Dashboard fetch error:', err)
+            setError('Failed to load dashboard data')
+        } finally {
+            setLoading(false)
+            isLoadingRef.current = false
+        }
+    }, [dashboardData.totalExpenses])
+
+    // Initial load only
+    useEffect(() => {
+        fetchDashboardData(true)
+    }, []) // Remove fetchDashboardData from dependency array
+
+    // Manual refresh function
+    const handleRefresh = useCallback(() => {
+        fetchDashboardData(true)
+    }, [fetchDashboardData])
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
@@ -58,7 +79,7 @@ const Dashboard = () => {
         ? (dashboardData.budgetUsed / dashboardData.monthlyBudget) * 100
         : 0
 
-    if (loading) {
+    if (loading && dashboardData.totalExpenses === 0) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -68,14 +89,31 @@ const Dashboard = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Welcome Section */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">
-                    Welcome back, {user?.name || user?.email}!
-                </h1>
-                <p className="text-gray-600 mt-2">
-                    Here's your financial overview for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </p>
+            {/* Welcome, Section with Refresh Button */}
+            <div className="mb-8 flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        Welcome back, {user?.name || user?.email}!
+                    </h1>
+                    <p className="text-gray-600 mt-2">
+                        Here's your financial overview for {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </p>
+                </div>
+                <button
+                    onClick={handleRefresh}
+                    disabled={isLoadingRef.current}
+                    className="btn-secondary flex items-center space-x-2"
+                >
+                    <svg
+                        className={`w-4 h-4 ${isLoadingRef.current ? 'animate-spin' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Refresh</span>
+                </button>
             </div>
 
             {error && (
@@ -86,8 +124,14 @@ const Dashboard = () => {
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                             </svg>
                         </div>
-                        <div className="ml-3">
+                        <div className="ml-3 flex justify-between items-center w-full">
                             <p className="text-sm text-red-800">{error}</p>
+                            <button
+                                onClick={handleRefresh}
+                                className="text-red-600 hover:text-red-800 underline text-sm"
+                            >
+                                Try Again
+                            </button>
                         </div>
                     </div>
                 </div>

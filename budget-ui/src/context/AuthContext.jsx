@@ -19,27 +19,62 @@ export const AuthProvider = ({ children }) => {
         const initializeAuth = async () => {
             try {
                 const token = localStorage.getItem('token')
+                console.log('AuthContext initializing...');
+                console.log('  - Token exists:', !!token);
+                console.log('  - Token preview:', token ? token.substring(0, 20) + '...' : 'none');
+
                 if (token) {
-                    // Check if it's a dev/mock token
-                    if (token === 'dev-bypass-token' || token.includes('mock-signature')) {
-                        // Use mock user data for dev tokens
-                        const mockUser = {
-                            email: 'dev@bypass.com',
-                            name: 'Dev User',
-                            id: 'dev-user-id'
-                        };
-                        setUser(mockUser);
-                    } else {
-                        // Validate real token with backend
-                        const userData = await authService.getCurrentUser();
-                        setUser(userData);
+                    console.log('Validating token with backend...');
+
+                    try {
+                        // Use authService for consistency
+                        const response = await authService.getCurrentUser();
+                        console.log('Token validation response:', response);
+
+                        if (response.data.success && response.data.data) {
+                            const userData = {
+                                username: response.data.data.username,
+                                email: response.data.data.email,
+                                name: response.data.data.username,
+                                roles: response.data.data.roles || ['ROLE_USER']
+                            };
+                            setUser(userData);
+                            console.log('Token validation successful, user set:', userData);
+                        } else {
+                            throw new Error('Invalid response format: ' + JSON.stringify(response.data));
+                        }
+
+                    } catch (validationError) {
+                        console.error('Token validation failed:', validationError);
+
+                        // In development, fall back to mock user for better dev experience
+                        if (process.env.NODE_ENV === 'development') {
+                            console.log('DEV MODE: Falling back to mock user...');
+                            const mockUser = {
+                                username: 'demo',
+                                email: 'demo@moneymapper.com',
+                                name: 'Demo User',
+                                roles: ['ROLE_USER']
+                            };
+                            setUser(mockUser);
+                            console.log('Using mock user:', mockUser);
+                        } else {
+                            // In production, properly log out
+                            console.log('PROD MODE: Logging out due to invalid token');
+                            localStorage.removeItem('token');
+                            setUser(null);
+                        }
                     }
+                } else {
+                    console.log('No token found, user will remain null');
                 }
             } catch (error) {
-                console.error('Token validation failed:', error);
+                console.error('AuthContext initialization error:', error);
                 localStorage.removeItem('token');
+                setUser(null);
             } finally {
                 setLoading(false);
+                console.log('AuthContext initialization complete');
             }
         }
 
@@ -56,46 +91,84 @@ export const AuthProvider = ({ children }) => {
             const response = await authService.login(usernameOrEmail, password)
             console.log('Auth service response:', response);
 
-            // Handle the ApiResponse wrapper structure
             if (response.data.success) {
-                const { token, user: userData } = response.data.data // JwtResponse is in data.data
+                const { token, username, email, roles } = response.data.data;
 
-                console.log('Login successful, storing token');
-                localStorage.setItem('token', token)
-                setUser(userData)
+                const userData = {
+                    username: username,
+                    email: email,
+                    roles: roles,
+                    name: username
+                };
 
-                return { success: true }
+                console.log('Login successful');
+                console.log('Token received:', token.substring(0, 20) + '...');
+                console.log('User data:', userData);
+
+                localStorage.setItem('token', token);
+                setUser(userData);
+
+                return { success: true };
             } else {
+                console.log('Login failed:', response.data.message);
                 return {
                     success: false,
                     error: response.data.message || 'Login failed'
-                }
+                };
             }
         } catch (error) {
-            console.error('Login failed:', error)
-            console.error('Error response:', error.response?.data)
+            console.error('Login failed:', error);
+            console.error('Error response:', error.response?.data);
             return {
                 success: false,
                 error: error.response?.data?.message || 'Login failed. Please try again.'
-            }
+            };
         }
     }
 
+    const logout = async () => {
+        console.log('Logging out...');
 
-    const logout = () => {
-        localStorage.removeItem('token')
-        setUser(null)
+        try {
+            const token = localStorage.getItem('token');
+
+            if (token) {
+                console.log('Calling logout API...');
+                await authService.logout();
+                console.log('Logout API call successful');
+            }
+        } catch (error) {
+            console.error('Logout API call failed:', error);
+            // Continue with local logout even if API fails
+        } finally {
+            // Always clear local state
+            console.log('Clearing local storage and user state');
+            localStorage.removeItem('token');
+            setUser(null);
+            console.log('Logout complete');
+        }
     }
 
     const register = async (userData) => {
+        console.log('Registering user:', userData.username);
+
         try {
             const response = await authService.register(userData)
-            const { token, user: newUser } = response.data
+            console.log('Registration response:', response);
 
-            localStorage.setItem('token', token)
-            setUser(newUser)
-
-            return { success: true }
+            if (response.data.success) {
+                console.log('Registration successful');
+                return {
+                    success: true,
+                    message: response.data.message // Important for email verification messages
+                };
+            } else {
+                console.log('Registration failed:', response.data.message);
+                return {
+                    success: false,
+                    error: response.data.message || 'Registration failed'
+                };
+            }
         } catch (error) {
             console.error('Registration failed:', error)
             return {
@@ -106,25 +179,45 @@ export const AuthProvider = ({ children }) => {
     }
 
     const updateUser = (userData) => {
+        console.log('Updating user data:', userData);
         setUser(prevUser => ({ ...prevUser, ...userData }))
     }
 
     const devBypass = async () => {
+        console.log('DEV BYPASS - Using authService login');
+
         try {
-            // Use one of the seeded users
             const response = await authService.login('demo', 'demo123');
+            console.log('DevBypass response:', response);
 
             if (response.data.success) {
-                const { token, user } = response.data.data;
+                const { token, username, email, roles } = response.data.data;
+
+                const userData = {
+                    username: username,
+                    email: email,
+                    roles: roles,
+                    name: username
+                };
+
+                console.log('DevBypass successful');
+                console.log('Token received:', token.substring(0, 30) + '...');
+
                 localStorage.setItem('token', token);
-                setUser(user);
+                setUser(userData);
+
+                // Verify everything is saved
+                const savedToken = localStorage.getItem('token');
+                console.log('Verification - Token in storage:', !!savedToken);
+
                 return { success: true };
             } else {
+                console.log('DevBypass failed:', response.data.message);
                 return { success: false, error: response.data.message };
             }
         } catch (error) {
-            console.error('Dev bypass error:', error);
-            return { success: false, error: 'Dev bypass failed' };
+            console.error('DevBypass failed:', error);
+            return { success: false, error: error.message };
         }
     };
 

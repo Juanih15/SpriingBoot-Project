@@ -5,8 +5,10 @@ import java.util.Set;
 
 public record UserDTO(
         Long id,
-        String userUsername, String userEmail, String username,
+        String username,
         String email,
+        String firstName,
+        String lastName,
         boolean enabled,
         Set<String> roles,
         LocalDateTime createdAt,

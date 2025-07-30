@@ -8,53 +8,92 @@ import com.moneymapper.budgettracker.repository.ExpenseRepository;
 import com.moneymapper.budgettracker.repository.BudgetRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.awt.print.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DashboardService {
 
     private final ExpenseRepository expenseRepository;
     private final BudgetRepository budgetRepository;
 
     public DashboardDTO getDashboardData(User user) {
-        Long userId = user.getId();
+        try {
+            Long userId = user.getId();
+            log.info("Getting dashboard data for user ID: {}", userId);
 
-        BigDecimal totalExpenses = expenseRepository.sumTotalAmountByUser(userId);
+            // Get total expenses (handle null)
+            BigDecimal totalExpenses = expenseRepository.sumTotalAmountByUser(userId);
+            if (totalExpenses == null) {
+                totalExpenses = BigDecimal.ZERO;
+            }
+            log.info("Total expenses for user {}: {}", userId, totalExpenses);
 
-        int month = LocalDate.now().getMonthValue();
-        int year = LocalDate.now().getYear();
-        BigDecimal monthlyBudget = budgetRepository.findActiveBudgetLimits(userId, LocalDate.now())
-                .stream()
-                .findFirst()
-                .orElse(BigDecimal.ZERO);
+            // Get monthly budget
+            List<BigDecimal> budgetLimits = budgetRepository.findActiveBudgetLimits(userId, LocalDate.now());
+            BigDecimal monthlyBudget = budgetLimits.stream()
+                    .findFirst()
+                    .orElse(BigDecimal.ZERO);
+            log.info("Monthly budget for user {}: {}", userId, monthlyBudget);
 
-        BigDecimal budgetUsed = totalExpenses.compareTo(monthlyBudget) > 0 ? monthlyBudget : totalExpenses;
-        BigDecimal budgetRemaining = monthlyBudget.subtract(totalExpenses);
+            // Calculate budget used and remaining
+            BigDecimal budgetUsed = totalExpenses.min(monthlyBudget);
+            BigDecimal budgetRemaining = monthlyBudget.subtract(totalExpenses);
+            log.info("Budget used: {}, Budget remaining: {}", budgetUsed, budgetRemaining);
 
-        List<Expense> recentExpenses = expenseRepository.findByUserIdOrderByExpenseDateDesc(userId, (Pageable) PageRequest.of(0, 5));
-        List<ExpenseReadDTO> recentTransactions = recentExpenses.stream()
-                .map(e -> new ExpenseReadDTO(
-                        e.getId(),
-                        e.getDescription(),
-                        e.getAmount(),
-                        e.getCategory().getName(),
-                        e.getExpenseDate()
-                ))
-                .toList();
+            // Get recent expenses (fix Pageable import issue)
+            Pageable pageRequest = PageRequest.of(0, 5);
+            List<Expense> recentExpenses;
 
-        return new DashboardDTO(
-                totalExpenses,
-                monthlyBudget,
-                budgetUsed,
-                budgetRemaining,
-                recentTransactions
-        );
+            try {
+                recentExpenses = expenseRepository.findByUserIdOrderByExpenseDateDesc(userId, pageRequest);
+            } catch (Exception e) {
+                log.warn("Error getting recent expenses, returning empty list: {}", e.getMessage());
+                recentExpenses = List.of(); // Return empty list if query fails
+            }
+
+            List<ExpenseReadDTO> recentTransactions = recentExpenses.stream()
+                    .map(e -> new ExpenseReadDTO(
+                            e.getId(),
+                            e.getDescription() != null ? e.getDescription() : "No description",
+                            e.getAmount(),
+                            e.getCategory() != null ? e.getCategory().getName() : "Unknown",
+                            e.getExpenseDate() != null ? e.getExpenseDate() : e.getDate()
+                    ))
+                    .toList();
+
+            log.info("Found {} recent transactions for user {}", recentTransactions.size(), userId);
+
+            DashboardDTO result = new DashboardDTO(
+                    totalExpenses,
+                    monthlyBudget,
+                    budgetUsed,
+                    budgetRemaining,
+                    recentTransactions
+            );
+
+            log.info("Dashboard data created successfully for user {}", userId);
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error getting dashboard data for user {}: ", user.getId(), e);
+
+            // Return empty/default dashboard data instead of throwing exception
+            return new DashboardDTO(
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    BigDecimal.ZERO,
+                    List.of()
+            );
+        }
     }
 }

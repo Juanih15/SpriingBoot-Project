@@ -88,4 +88,9 @@ public class Budget {
     public List<Expense> getExpenses() {
         return expenses;
     }
+
+    public void addExpense(Expense expense) {
+        expenses.add(expense);
+        expense.setBudget(this);
+    }
 }

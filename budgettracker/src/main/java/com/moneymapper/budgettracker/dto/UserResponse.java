@@ -1,12 +1,16 @@
 package com.moneymapper.budgettracker.dto;
 
-// User Response DTO
+import java.time.LocalDateTime;
+import java.util.Set;
+
 public record UserResponse(
         Long id,
-        String userUsername, String userEmail, String username,
+        String username,
         String email,
-        boolean firstName,
-        java.util.Set<String> lastName,
-        java.time.LocalDateTime roles,
-        java.time.LocalDateTime enabled
+        String firstName,
+        String lastName,
+        boolean enabled,
+        Set<String> roles,
+        LocalDateTime createdAt,
+        LocalDateTime lastLoginAt
 ) {}

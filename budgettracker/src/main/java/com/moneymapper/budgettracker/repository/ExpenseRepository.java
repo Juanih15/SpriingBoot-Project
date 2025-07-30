@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.awt.print.Pageable;
+import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -72,13 +72,12 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
        BigDecimal sumTotalAmountByUser(@Param("userId") Long userId);
 
        @Query("""
-           SELECT e
-           FROM Expense e
-           WHERE e.user.id = :userId
-           ORDER BY e.date DESC
-       """)
+            SELECT e
+            FROM Expense e
+            WHERE e.user.id = :userId
+            ORDER BY e.date DESC
+        """)
        List<Expense> findByUserIdOrderByExpenseDateDesc(@Param("userId") Long userId, Pageable pageable);
-
 }
 
        
