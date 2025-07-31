@@ -141,11 +141,8 @@ export const categoryService = {
 
 // Expense service
 export const expenseService = {
-    // Add expense with query parameters
-    addExpense: (categoryId, amount) =>
-        api.post('/expenses', null, {
-            params: { categoryId, amount }
-        }),
+    addExpense: (expenseData) =>
+        api.post('/expenses', expenseData),
 
     // Get expense summary
     getExpenseSummary: () =>

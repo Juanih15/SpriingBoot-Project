@@ -1,7 +1,7 @@
 // Optimized Dashboard Component with proper data fetching
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { budgetService } from '../services/api'
+import {budgetService, expenseService} from '../services/api'
 
 const Dashboard = () => {
     const { user } = useAuth()
@@ -14,6 +14,20 @@ const Dashboard = () => {
     });
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+
+    const [showAddModal, setShowAddModal] = useState(false)
+
+    const [transactionForm, setTransactionForm] = useState({
+        description: '',
+        amount: '',
+        expenseDate: '',
+        memo: '',
+        categoryId: ''
+    });
+
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [formError, setFormError] = useState('')
+
 
     // Use refs to prevent duplicate requests
     const isLoadingRef = useRef(false)
@@ -67,6 +81,32 @@ const Dashboard = () => {
     const handleRefresh = useCallback(() => {
         fetchDashboardData(true)
     }, [fetchDashboardData])
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setTransactionForm((prev) => ({ ...prev, [name]: value }));
+    };
+    const handleAddTransaction = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        setFormError('');
+
+        try {
+            const payload = {
+                ...transactionForm,
+                amount: parseFloat(transactionForm.amount),
+                categoryId: parseInt(transactionForm.categoryId)
+            };
+            await expenseService.addExpense(payload);
+            setShowAddModal(false);
+            setTransactionForm({ description: '', amount: '', expenseDate: '', memo: '', categoryId: '' });
+            fetchDashboardData(true);
+        } catch (err) {
+            console.error('Add expense error:', err);
+            setFormError('Failed to add transaction. Please check your input.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-US', {
@@ -258,17 +298,38 @@ const Dashboard = () => {
 
             {/* Quick Actions */}
             <div className="mt-8 flex flex-wrap gap-4 justify-center">
-                <button className="btn-primary">
+                <button className="btn-primary" onClick={() => setShowAddModal(true)}>
                     Add Transaction
                 </button>
-                <button className="btn-secondary">
-                    View Reports
-                </button>
-                <button className="btn-secondary">
-                    Manage Categories
-                </button>
+                <button className="btn-secondary">View Reports</button>
+                <button className="btn-secondary">Manage Categories</button>
             </div>
+
+            {/* Add Transaction Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+                        <h2 className="text-lg font-semibold mb-4">Add New Transaction</h2>
+                        <form onSubmit={handleAddTransaction}>
+                            <input type="text" name="description" placeholder="Description" value={transactionForm.description} onChange={handleInputChange} className="input input-bordered w-full mb-3" required />
+                            <input type="number" name="amount" placeholder="Amount" value={transactionForm.amount} onChange={handleInputChange} className="input input-bordered w-full mb-3" min="0.01" step="0.01" required />
+                            <input type="date" name="expenseDate" value={transactionForm.expenseDate} onChange={handleInputChange} className="input input-bordered w-full mb-3" required />
+                            <input type="text" name="memo" placeholder="Memo (optional)" value={transactionForm.memo} onChange={handleInputChange} className="input input-bordered w-full mb-3" />
+                            <input type="number" name="categoryId" placeholder="Category ID" value={transactionForm.categoryId} onChange={handleInputChange} className="input input-bordered w-full mb-3" required />
+                            {formError && <p className="text-red-600 text-sm mb-2">{formError}</p>}
+                            <div className="flex justify-end space-x-2">
+                                <button type="button" onClick={() => setShowAddModal(false)} className="btn btn-secondary">Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                                    {isSubmitting ? 'Saving...' : 'Add'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
+
+
     )
 }
 
