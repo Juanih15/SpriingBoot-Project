@@ -2,11 +2,16 @@ package com.moneymapper.budgettracker.web;
 
 import com.moneymapper.budgettracker.domain.Category;
 import com.moneymapper.budgettracker.domain.Expense;
+import com.moneymapper.budgettracker.domain.User;
+import com.moneymapper.budgettracker.dto.ExpenseDTO;
+import com.moneymapper.budgettracker.mapper.ExpenseMapper;
 import com.moneymapper.budgettracker.repository.ExpenseRepository;
 import com.moneymapper.budgettracker.service.CategoryService;
 import com.moneymapper.budgettracker.dto.ExpenseUpdateDTO;
 import com.moneymapper.budgettracker.service.ExpenseService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -31,14 +36,16 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
 
-    /** POST /api/expenses?categoryId={id}&amount={amt} */
+    /** POST /api/expenses */
     @PostMapping
-    public ResponseEntity<Void> addExpense(@RequestParam Long categoryId,
-            @RequestParam BigDecimal amount) {
-        Category cat = categoryService.findById(categoryId);
-        Expense exp = new Expense(cat, amount, LocalDate.now());
-        expenseRepo.save(exp);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> addExpense(@Valid @RequestBody ExpenseDTO dto,
+                                           @AuthenticationPrincipal User principal) {
+        Category category = categoryService.findById(dto.categoryId());
+
+        Expense expense = ExpenseMapper.fromDto(dto, category, principal);
+        expenseRepo.save(expense);
+
+        return ResponseEntity.ok().build(); // or ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     /** GET /api/expenses/summary */
